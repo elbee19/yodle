@@ -1,4 +1,4 @@
-
+//package yodle;
 
 /**
  *  JuggleFest problem for Yodle
@@ -14,7 +14,6 @@ import java.util.*;
 /**
  * This class represents the Circuit objects
  * @author amit
- *
  */
 class Circuit
 {
@@ -396,7 +395,7 @@ public class YodleJuggle
 							//Add this to whatever circuit available you can
 							for(int availableCircuit=0;availableCircuit<clist.size();++availableCircuit)
 							{
-								if(!clist.get(availableCircuit).isFull())
+								//if(!clist.get(availableCircuit).isFull())
 								{
 									int status=clist.get(availableCircuit).attemptAdd(jlist.get(i));
 									if(status==0)
@@ -413,6 +412,7 @@ public class YodleJuggle
 									{
 										settled[i]=true;
 										settled[status]=false;
+										currPositions[status]=0;
 										i=status;
 									}
 								}
@@ -422,6 +422,7 @@ public class YodleJuggle
 					default:
 						settled[i]=true;
 						settled[c]=false;
+						currPositions[c]=0;
 						i=c;					
 				}
 			}
