@@ -1,4 +1,4 @@
-//package yodle;
+
 
 /**
  *  JuggleFest problem for Yodle
@@ -37,7 +37,7 @@ class Circuit
 		this.e=e;
 		this.p=p;
 		this.id=id;
-		ts=new TreeSet<Juggler>(new JugglerComparator(this));
+		this.ts=new TreeSet<Juggler>(new JugglerComparator(this));
 		
 	}
 	
@@ -77,16 +77,16 @@ class Circuit
 	 */
 	public int attemptAdd(Juggler j)
 	{
-		if(ts.size()<capacity)
+		if(this.ts.size()<capacity)
 		{
-			ts.add(j);
+			this.ts.add(j);
 			return 0;
 		}
-		else if(matchScore(ts.first())<matchScore(j))
+		else if(matchScore(this.ts.first())<matchScore(j))
 		{
-			int removedId=ts.first().getid();
-			ts.remove(ts.first());
-			ts.add(j);
+			int removedId=this.ts.first().getid();
+			this.ts.remove(this.ts.first());
+			this.ts.add(j);
 			return removedId;
 		}
 		else
@@ -108,7 +108,7 @@ class Circuit
 	 */
 	public boolean isFull()
 	{
-		return ts.size()+1==capacity;
+		return ts.size()==capacity;
 	}
 	
 	/**
@@ -253,27 +253,23 @@ class Juggler
 		
 		return retString;
 	}
-}
-
-/*
-
-class CircuitComparator implements Comparator<Circuit>
-{
-	private Juggler j;
 	
-	public CircuitComparator(Juggler j)
+	@Override
+	public boolean equals(Object jnew)
 	{
-		this.j=j;
-	}
-
-	public int compare(Circuit c1, Circuit c2) 
-	{
-		return (new Integer(c1.matchScore(j))).compareTo(new Integer(c2.matchScore(j)));
+		if(!(jnew instanceof Juggler))
+			return false;
+		return this.id==((Juggler)jnew).id;
+		
 	}
 	
+	@Override
+	public int hashCode()
+	{
+		return this.id;
+	}
 }
 
-*/
 
 /**
  * This class will be used to compare and arrange various Juggler objects, given a particular circuit
@@ -298,7 +294,14 @@ class JugglerComparator implements Comparator<Juggler>
 	 */
 	public int compare(Juggler j1, Juggler j2) 
 	{
-		return (new Integer(c.matchScore(j1))).compareTo(new Integer(c.matchScore(j2)));
+		int compareScore= (new Integer(c.matchScore(j1))).compareTo(new Integer(c.matchScore(j2)));
+		
+		if(compareScore==0)
+		{
+			return j1.getid()==j2.getid()?0:-1;
+		}
+		else
+			return compareScore;
 	}
 	
 }
@@ -330,27 +333,12 @@ public class YodleJuggle
 			for(Circuit c:clist)
 				c.setSize(jugglerCount/circuitCount);
 			
-			matchMaker(clist,jlist);
+			int[] whereplaced=matchMaker(clist,jlist);
 			
 			for(int i=clist.size()-1;i>=0;i--)
 			{
 				clist.get(i).printAsssignments(clist);
 			}
-			
-			/*for(int i=0;i<clist.size();i++)
-				System.out.println(String.format("#%d - %s",i,clist.get(i).toString()));
-			*/
-			
-			/*ArrayList<Juggler> arrJug;
-			for(int i=clist.size()-1;i>=0;--i)
-			{
-				System.out.print("C"+i+" ");
-				arrJug=clist.get(i).getJugglerList();
-				for(Juggler j:arrJug)
-				{
-					
-				}
-			}*/
 		}
 		catch(IOException e)
 		{
@@ -364,7 +352,7 @@ public class YodleJuggle
 	 * @param clist ArrayList of Circuit objects
 	 * @param jlist ArrayList of Juggler Objects
 	 */
-	public static void matchMaker(ArrayList<Circuit> clist,ArrayList<Juggler> jlist)
+	/*public static void matchMaker(ArrayList<Circuit> clist,ArrayList<Juggler> jlist)
 	{
 		int currPositions[]=new int[jlist.size()];
 		boolean settled[]=new boolean[jlist.size()];
@@ -430,6 +418,101 @@ public class YodleJuggle
 				i++;
 		}
 		
+		
+	}*/
+	public static int[] matchMaker(ArrayList<Circuit> clist,ArrayList<Juggler> jlist)
+	{
+		int currPositions[]=new int[jlist.size()];
+		int wherePlaced[]=new int[jlist.size()];
+		boolean settled[]=new boolean[jlist.size()];
+		boolean allsettled=false;
+		
+		while(!allsettled)
+		{
+			
+			allsettled=true;
+			int prefPointer,pref=0;
+			for(int i=0;i<jlist.size();i++)
+			{
+				if(!settled[i])
+				{
+					
+					prefPointer=currPositions[i];
+					
+					boolean placed=false;
+					
+					while(!placed && (prefPointer<jlist.get(i).getPrefSize()))
+					{
+						pref=jlist.get(i).getPref(prefPointer);
+						int c=clist.get(pref).attemptAdd(jlist.get(i));
+						switch(c)
+						{
+							case 0:
+								settled[i]=true;
+								
+								wherePlaced[i]=pref;
+								
+								placed=true;
+								break;
+							
+							case -1:
+								currPositions[i]++;
+								prefPointer=currPositions[i];
+								
+								break;
+								
+							default:
+								settled[i]=true;
+								settled[c]=false;
+								placed=true;
+								allsettled=false;
+								
+								wherePlaced[i]=pref;
+								
+								break;
+						}
+					}
+					
+					if(!placed)
+					{
+						for(int j=0;j<clist.size();j++)
+						{
+							int c=clist.get(j).attemptAdd(jlist.get(i));
+							switch(c)
+							{
+								case 0:
+									settled[i]=true;
+									placed=true;
+									
+									wherePlaced[i]=pref;
+									
+									break;
+									
+								case -1:
+									break;
+									
+								default:
+									settled[i]=true;
+									settled[c]=false;
+									placed=true;
+									allsettled=false;
+									
+									wherePlaced[i]=pref;
+									
+									break;
+							}
+
+							if(placed)
+								break;
+						}
+						
+					}
+					
+				}
+			}
+		}
+		
+		return wherePlaced;
 		
 	}
 	
